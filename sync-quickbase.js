@@ -248,7 +248,7 @@ if (isBackfill) {
 } else {
   console.log('🔄 RUNNING REGULAR SYNC (Last 90 days of sales)');
   syncData(false);
-// ADD THIS AT THE VERY END OF sync-quickbase.js
+}  // <-- ADD THIS CLOSING BRACKET
 
 // For continuous running on Railway
 if (process.env.RAILWAY_ENVIRONMENT || process.argv.includes('--continuous')) {
