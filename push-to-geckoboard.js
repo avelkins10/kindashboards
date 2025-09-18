@@ -29,10 +29,11 @@ async function pushDashboardMetrics() {
     const todayData = await pgClient.query('SELECT * FROM v_installs_today');
     const today = todayData.rows[0];
     
+   // Around line 30, update to:
     await todayDataset.replace([{
-      scheduled: parseInt(today.deals_scheduled_today) || 0,
-      completed: parseInt(today.deals_completed_today) || 0,
-      kw: parseFloat(today.kw_completed_today) || 0
+  scheduled: parseInt(today.deals_scheduled_today) || 0,
+  completed: parseInt(today.deals_completed_today) || 0,
+  kw: parseFloat(today.kw_completed_today) || 0
     }]);
     
     // Weekly dataset
@@ -49,13 +50,18 @@ async function pushDashboardMetrics() {
     
     const weekData = await pgClient.query(`
       SELECT 
-        COUNT(*) FILTER (WHERE install_scheduled_date >= DATE_TRUNC('week', CURRENT_DATE)) as scheduled,
-        COUNT(*) FILTER (WHERE install_completed_date >= DATE_TRUNC('week', CURRENT_DATE)) as completed,
-        ROUND(SUM(system_size_kw) FILTER (WHERE install_completed_date >= DATE_TRUNC('week', CURRENT_DATE)), 1) as kw
+        COUNT(*) FILTER (WHERE install_scheduled_date >= DATE_TRUNC('week', CURRENT_DATE))::INTEGER as scheduled,
+        COUNT(*) FILTER (WHERE install_completed_date >= DATE_TRUNC('week', CURRENT_DATE))::INTEGER as completed,
+        COALESCE(SUM(system_size_kw) FILTER (WHERE install_completed_date >= DATE_TRUNC('week', CURRENT_DATE)), 0)::FLOAT as kw
       FROM projects
     `);
     
-    await weekDataset.replace([weekData.rows[0]]);
+    // And ensure the replace line converts properly:
+    await weekDataset.replace([{
+      scheduled: parseInt(weekData.rows[0].scheduled) || 0,
+      completed: parseInt(weekData.rows[0].completed) || 0,
+      kw: parseFloat(weekData.rows[0].kw) || 0
+    }]);
     
     // Daily trend dataset
     const trendDataset = gb.defineDataset({
