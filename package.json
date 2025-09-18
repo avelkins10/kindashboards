@@ -1,15 +1,14 @@
 {
-  "name": "kin-dashboards-sync",
-  "version": "1.0.0",
-  "description": "Quickbase to Neon sync for Kin Home",
-  "main": "sync-quickbase.js",
-  "scripts": {
-  "start": "node start.js"
-}
-  },
-  "dependencies": {
-    "axios": "^1.6.0",
-    "geckoboard": "^2.0.2",
-    "pg": "^8.11.0"
+    "name": "kin-dashboards-sync",
+    "version": "1.0.0",
+    "description": "Sync Kin Quickbase data to Neon for dashboards",
+    "main": "sync-quickbase.js",
+    "scripts": {
+      "start": "node start.js"
+    },
+    "dependencies": {
+      "axios": "^1.7.7",
+      "geckoboard": "^1.2.2",
+      "pg": "^8.13.1"
+    }
   }
-}
