@@ -1,8 +1,5 @@
 const { Client: PgClient } = require('pg');
-const Geckoboard = require('geckoboard');
-
-// You'll need to get your API key from Geckoboard settings
-const gb = new Geckoboard('e118196dc4a88829997c16d7b2fa09be');
+const geckoboard = require('geckoboard')('e118196dc4a88829997c16d7b2fa09be');
 const pgClient = new PgClient({ 
   connectionString: 'postgresql://neondb_owner:npg_5eXxOfA7LbFE@ep-lucky-cake-afmdhgby-pooler.c-2.us-west-2.aws.neon.tech/neondb?sslmode=require' 
 });
@@ -18,7 +15,7 @@ async function pushDashboardMetrics() {
     const todayData = await pgClient.query('SELECT * FROM v_installs_today');
     const today = todayData.rows[0];
     
-    await gb.datasets.findOrCreate('installs.today.score', {
+    await geckoboard.datasets.findOrCreate('installs.today.score', {
       fields: {
         completed: { type: 'number', name: 'Completed' },
         scheduled: { type: 'number', name: 'Scheduled' },
@@ -40,7 +37,7 @@ async function pushDashboardMetrics() {
       FROM projects
     `);
     
-    await gb.datasets.findOrCreate('installs.week.progress', {
+    await geckoboard.datasets.findOrCreate('installs.week.progress', {
       fields: {
         value: { type: 'percentage', name: 'Weekly Completion' },
         completed: { type: 'number', name: 'Completed' },
@@ -65,7 +62,7 @@ async function pushDashboardMetrics() {
       ORDER BY date
     `);
     
-    await gb.datasets.findOrCreate('installs.daily.trend', {
+    await geckoboard.datasets.findOrCreate('installs.daily.trend', {
       fields: {
         date: { type: 'date', name: 'Date' },
         installs: { type: 'number', name: 'Installs Completed' }
@@ -88,7 +85,7 @@ async function pushDashboardMetrics() {
       LIMIT 5
     `);
     
-    await gb.datasets.findOrCreate('installs.by.state', {
+    await geckoboard.datasets.findOrCreate('installs.by.state', {
       fields: {
         label: { type: 'string', name: 'State' },
         value: { type: 'number', name: 'Installs' },
@@ -131,7 +128,7 @@ async function pushDashboardMetrics() {
       ORDER BY m.month
     `);
     
-    await gb.datasets.findOrCreate('monthly.sales.completions', {
+    await geckoboard.datasets.findOrCreate('monthly.sales.completions', {
       fields: {
         month: { type: 'string', name: 'Month' },
         sales: { type: 'number', name: 'Sales' },
@@ -160,7 +157,7 @@ async function pushDashboardMetrics() {
     `);
     
     const pipeline = pipelineData.rows[0];
-    await gb.datasets.findOrCreate('pipeline.funnel', {
+    await geckoboard.datasets.findOrCreate('pipeline.funnel', {
       fields: {
         stage: { type: 'string', name: 'Stage' },
         count: { type: 'number', name: 'Projects' }
