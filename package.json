@@ -7,7 +7,8 @@
     "start": "node sync-quickbase.js"
   },
   "dependencies": {
-    "pg": "^8.11.0",
-    "axios": "^1.6.0"
+    "axios": "^1.6.0",
+    "geckoboard": "^2.0.2",
+    "pg": "^8.11.0"
   }
 }
