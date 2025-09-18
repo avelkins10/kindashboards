@@ -324,3 +324,170 @@ if (process.env.RAILWAY_ENVIRONMENT || process.argv.includes('--continuous')) {
   setInterval(pushDashboardMetrics, 5 * 60 * 1000);
   console.log('🔄 Updating Geckoboard every 5 minutes...');
 }
+// CLOSER LEADERBOARD - CURRENT MONTH
+const closerDataset = gb.defineDataset({
+  id: 'leaderboard.closers',
+  fields: {
+    name: { type: 'string', name: 'Closer' },
+    deals: { type: 'number', name: 'Deals' },
+    kw: { type: 'number', name: 'kW Sold' },
+    avg_size: { type: 'number', name: 'Avg System Size' }
+  }
+});
+
+await closerDataset.create();
+
+const closerData = await pgClient.query(`
+  SELECT 
+    COALESCE(closer_name, 'Unassigned') as name,
+    COUNT(*)::INTEGER as deals,
+    ROUND(SUM(system_size_kw)::NUMERIC, 1)::FLOAT as kw,
+    ROUND(AVG(system_size_kw)::NUMERIC, 1)::FLOAT as avg_size
+  FROM projects
+  WHERE sale_date >= DATE_TRUNC('month', CURRENT_DATE)
+    AND closer_name IS NOT NULL
+  GROUP BY closer_name
+  ORDER BY SUM(system_size_kw) DESC
+  LIMIT 10
+`);
+
+await closerDataset.replace(closerData.rows);
+
+// SETTER LEADERBOARD - CURRENT MONTH
+const setterDataset = gb.defineDataset({
+  id: 'leaderboard.setters',
+  fields: {
+    name: { type: 'string', name: 'Setter' },
+    deals: { type: 'number', name: 'Deals Set' },
+    kw: { type: 'number', name: 'kW Set' }
+  }
+});
+
+await setterDataset.create();
+
+const setterData = await pgClient.query(`
+  SELECT 
+    COALESCE(setter_name, 'Unassigned') as name,
+    COUNT(*)::INTEGER as deals,
+    ROUND(SUM(system_size_kw)::NUMERIC, 1)::FLOAT as kw
+  FROM projects
+  WHERE sale_date >= DATE_TRUNC('month', CURRENT_DATE)
+    AND setter_name IS NOT NULL
+  GROUP BY setter_name
+  ORDER BY COUNT(*) DESC
+  LIMIT 10
+`);
+
+await setterDataset.replace(setterData.rows);
+
+// SALES OFFICE PERFORMANCE
+const officeDataset = gb.defineDataset({
+  id: 'performance.by.office',
+  fields: {
+    office: { type: 'string', name: 'Office' },
+    sales: { type: 'number', name: 'Sales' },
+    installs: { type: 'number', name: 'Installs' },
+    conversion: { type: 'percentage', name: 'Install Rate' }
+  }
+});
+
+await officeDataset.create();
+
+const officeData = await pgClient.query(`
+  SELECT 
+    COALESCE(sales_office, 'Unknown') as office,
+    COUNT(*)::INTEGER as sales,
+    COUNT(install_completed_date)::INTEGER as installs,
+    CASE 
+      WHEN COUNT(*) > 0 
+      THEN (COUNT(install_completed_date)::FLOAT / COUNT(*)::FLOAT)
+      ELSE 0 
+    END as conversion
+  FROM projects
+  WHERE sale_date >= DATE_TRUNC('month', CURRENT_DATE)
+  GROUP BY sales_office
+  ORDER BY COUNT(*) DESC
+`);
+
+await officeDataset.replace(officeData.rows);
+
+// TOP PERFORMERS THIS WEEK
+const weeklyTopDataset = gb.defineDataset({
+  id: 'top.performers.week',
+  fields: {
+    name: { type: 'string', name: 'Rep' },
+    role: { type: 'string', name: 'Role' },
+    metric: { type: 'number', name: 'Deals' }
+  }
+});
+
+await weeklyTopDataset.create();
+
+const weeklyTop = await pgClient.query(`
+  WITH closers AS (
+    SELECT 
+      closer_name as name,
+      'Closer' as role,
+      COUNT(*) as metric
+    FROM projects
+    WHERE sale_date >= DATE_TRUNC('week', CURRENT_DATE)
+      AND closer_name IS NOT NULL
+    GROUP BY closer_name
+  ),
+  setters AS (
+    SELECT 
+      setter_name as name,
+      'Setter' as role,
+      COUNT(*) as metric
+    FROM projects
+    WHERE sale_date >= DATE_TRUNC('week', CURRENT_DATE)
+      AND setter_name IS NOT NULL
+    GROUP BY setter_name
+  )
+  SELECT * FROM (
+    SELECT * FROM closers
+    UNION ALL
+    SELECT * FROM setters
+  ) combined
+  ORDER BY metric DESC
+  LIMIT 5
+`);
+
+await weeklyTopDataset.replace(weeklyTop.rows.map(row => ({
+  name: row.name,
+  role: row.role,
+  metric: parseInt(row.metric)
+})));
+
+// CLOSER CONVERSION RATES
+const conversionDataset = gb.defineDataset({
+  id: 'closer.conversion',
+  fields: {
+    name: { type: 'string', name: 'Closer' },
+    sold: { type: 'number', name: 'Sold' },
+    installed: { type: 'number', name: 'Installed' },
+    rate: { type: 'percentage', name: 'Install Rate' }
+  }
+});
+
+await conversionDataset.create();
+
+const conversionData = await pgClient.query(`
+  SELECT 
+    closer_name as name,
+    COUNT(*)::INTEGER as sold,
+    COUNT(install_completed_date)::INTEGER as installed,
+    CASE 
+      WHEN COUNT(*) > 0 
+      THEN (COUNT(install_completed_date)::FLOAT / COUNT(*)::FLOAT)
+      ELSE 0 
+    END as rate
+  FROM projects
+  WHERE sale_date >= DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '3 months'
+    AND closer_name IS NOT NULL
+  GROUP BY closer_name
+  HAVING COUNT(*) >= 5  -- Only show closers with at least 5 sales
+  ORDER BY (COUNT(install_completed_date)::FLOAT / COUNT(*)::FLOAT) DESC
+`);
+
+await conversionDataset.replace(conversionData.rows);
