@@ -8,7 +8,7 @@
     },
     "dependencies": {
       "axios": "^1.7.7",
-      "geckoboard": "^1.2.1",
+      "geckoboard": "^1.2.0",
       "pg": "^8.13.1"
     }
   }
