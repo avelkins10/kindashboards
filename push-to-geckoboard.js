@@ -2,7 +2,7 @@ const { Client: PgClient } = require('pg');
 const Geckoboard = require('geckoboard');
 
 // You'll need to get your API key from Geckoboard settings
-const gb = new Geckoboard.GB('e118196dc4a88829997c16d7b2fa09be');
+const gb = new Geckoboard('e118196dc4a88829997c16d7b2fa09be');
 const pgClient = new PgClient({ 
   connectionString: 'postgresql://neondb_owner:npg_5eXxOfA7LbFE@ep-lucky-cake-afmdhgby-pooler.c-2.us-west-2.aws.neon.tech/neondb?sslmode=require' 
 });
