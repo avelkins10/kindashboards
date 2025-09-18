@@ -298,4 +298,29 @@ async function pushDashboardMetrics() {
       UNION ALL
       SELECT 
         'Avg Sale to Schedule' as metric,
-        ROUND(AVG(install_scheduled_date - sale_dat
+        ROUND(AVG(install_scheduled_date - sale_date))::INTEGER as days
+      FROM projects
+      WHERE install_scheduled_date IS NOT NULL
+        AND sale_date IS NOT NULL
+        AND install_scheduled_date >= CURRENT_DATE - INTERVAL '30 days'
+    `);
+    
+    await cycleTimeDataset.replace(cycleTime.rows);
+    
+    console.log('✅ All metrics pushed to Geckoboard!');
+    
+  } catch (error) {
+    console.error('❌ Error:', error.message);
+  } finally {
+    await pgClient.end();
+  }
+}
+
+// Run immediately
+pushDashboardMetrics();
+
+// Schedule updates
+if (process.env.RAILWAY_ENVIRONMENT || process.argv.includes('--continuous')) {
+  setInterval(pushDashboardMetrics, 5 * 60 * 1000);
+  console.log('🔄 Updating Geckoboard every 5 minutes...');
+}
