@@ -23,6 +23,7 @@ const FIELD_IDS = {
   salesDate: 522,  // ADDED THIS
   installScheduled: 1356,
   installCompleted: 534,
+  installCompletedActual: 587,  // ← ADD THIS LINE
   engineeringCompleted: 478,
   permitApproved: 208,
   inspectionPassed: 491,
@@ -146,7 +147,8 @@ async function syncData(isBackfill = false) {
             record[255]?.value,   // status
             salesDate,            // sale_date (NEW)
             record[1356]?.value ? new Date(record[1356].value) : null,  // install_scheduled
-            record[534]?.value ? new Date(record[534].value) : null,    // install_completed
+            record[587]?.value ? new Date(record[587].value) : 
+  (record[534]?.value ? new Date(record[534].value) : null),    // install_completed
             record[478]?.value ? new Date(record[478].value) : null,    // engineering_completed
             record[208]?.value ? new Date(record[208].value) : null,    // permit_approved
             record[491]?.value ? new Date(record[491].value) : null,    // inspection_passed
