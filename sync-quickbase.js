@@ -54,14 +54,14 @@ async function syncData(isBackfill = false) {
     if (isBackfill) {
       // Get ALL records sold since April 28, 2024
       console.log('📥 BACKFILLING all sales since April 28, 2024...');
-      whereClause = "{522.OAF.'04-28-2024'}"; // Sales date on or after April 28
+      whereClause = "{522.OAF.'04-28-2025'}"; // Sales date on or after April 28
     } else {
       console.log('📥 Fetching recent sales from Kin Quickbase...');
       // Just get last 90 days for regular syncs
       const ninetyDaysAgo = new Date();
       ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
       const dateString = `${(ninetyDaysAgo.getMonth() + 1).toString().padStart(2, '0')}-${ninetyDaysAgo.getDate().toString().padStart(2, '0')}-${ninetyDaysAgo.getFullYear()}`;
-      whereClause = `{522.OAF.'${dateString}'}`; // Sales date in last 90 days
+      whereClause = `{522.OAF.'${dateString}'}OR{587.OAF.'${dateString}'}` ; // Sales OR completion in last 90 days
     }
     
     // Fetch from Quickbase
